@@ -47,5 +47,29 @@ namespace GameReviewAPI.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // GET api/games/5/averagescore
+        // Returns the average review score for a specific game
+        [HttpGet("{id}/averagescore")]
+        public async Task<IActionResult> GetAverageScore(int id)
+        {
+            var game = await _context.Games.Include(g => g.Reviews)
+                                           .FirstOrDefaultAsync(g => g.Id == id);
+            if (game == null) return NotFound();
+
+            if (!game.Reviews.Any())
+                return Ok(new { gameId = id, gameName = game.Name, averageScore = 0, totalReviews = 0 });
+
+            var average = game.Reviews.Average(r => r.Score);
+            var total = game.Reviews.Count();
+
+            return Ok(new
+            {
+                gameId = id,
+                gameName = game.Name,
+                averageScore = Math.Round(average, 1),
+                totalReviews = total
+            });
+        }
     }
 }
